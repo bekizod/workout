@@ -3,19 +3,27 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated, Platfor
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { Svg, Path } from 'react-native-svg';
 import { workoutData, equipmentIcons, svgPaths } from '@/data/workoutData';
-import {Image} from "expo-image";
+import { Image } from "expo-image";
+
+type Exercise = {
+  name: string;
+  asset_url: string;
+  gif_asset_url: string;
+  equipment: keyof typeof equipmentIcons;
+  completed?: boolean;
+};
+
 const WorkoutScreen = () => {
   // State management
-  const [exercises, setExercises] = useState(workoutData.exercises);
-  const [selectedExercise, setSelectedExercise] = useState<any>(null);
-  const [completedExercises, setCompletedExercises] = useState<any[]>([]);
+  const [exercises, setExercises] = useState<any[]>(workoutData.exercises);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [originalExercises, setOriginalExercises] = useState<any[]>([...workoutData.exercises]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isGifPlaying, setIsGifPlaying] = useState(false);
   
   // Refs
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<ScrollView>(null);
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   // Effects
@@ -26,7 +34,7 @@ const WorkoutScreen = () => {
   }, []);
 
   // Handlers
-  const handleSelectExercise = (exercise : any) => {
+  const handleSelectExercise = (exercise: Exercise) => {
     if (!editMode) {
       setSelectedExercise(exercise);
       setIsGifPlaying(false);
@@ -43,9 +51,22 @@ const WorkoutScreen = () => {
     }).start(() => setIsGifPlaying(true));
   };
 
-  const handleCompleteExercise = (exercise : any) => {
-    if (!completedExercises.includes(exercise)) {
-      setCompletedExercises([...completedExercises, exercise]);
+  const handleCompleteExercise = (exercise: Exercise) => {
+    const updatedExercises = exercises.map(ex => {
+      if (ex.name === exercise.name) {
+        return { ...ex, completed: !ex.completed };
+      }
+      return ex;
+    });
+    
+    setExercises(updatedExercises);
+    
+    // If the exercise was just completed, automatically select the next one
+    if (!exercise.completed) {
+      const currentIndex = exercises.findIndex(ex => ex.name === exercise.name);
+      if (currentIndex < exercises.length - 1) {
+        setSelectedExercise(exercises[currentIndex + 1]);
+      }
     }
   };
 
@@ -56,12 +77,12 @@ const WorkoutScreen = () => {
     }
   };
 
-  const handleDragEnd = ({ data }: { data: any[] }) => {
+  const handleDragEnd = ({ data }: { data: Exercise[] }) => {
     setExercises(data);
     setHasChanges(true);
   };
 
-  const handleRemoveExercise = (index:any) => {
+  const handleRemoveExercise = (index: number) => {
     const newExercises = [...exercises];
     newExercises.splice(index, 1);
     setExercises(newExercises);
@@ -105,13 +126,12 @@ const WorkoutScreen = () => {
     drag, 
     isActive 
   }: {
-    item: any;
+    item: Exercise;
     index: number;
     drag: () => void;
     isActive: boolean;
   }) => {
     const isSelected = selectedExercise?.name === item.name;
-    const isCompleted = completedExercises.includes(item);
     
     return (
       <TouchableOpacity
@@ -123,7 +143,7 @@ const WorkoutScreen = () => {
         <View style={[
           styles.exerciseItemWrapper,
           isSelected && !editMode && styles.selectedExerciseWrapper,
-          isCompleted && styles.completedExerciseWrapper
+          item.completed && styles.completedExerciseWrapper
         ]}>
           <View style={styles.exerciseCircle}>
             <Image
@@ -140,9 +160,9 @@ const WorkoutScreen = () => {
           </View>
         )}
         
-        {isCompleted && !editMode && (
+        {item.completed && !editMode && (
           <View style={styles.checkmark}>
-            <SvgIcon path={svgPaths.exerciseIcons.checkmark} fill="#fff" />
+            <SvgIcon path={svgPaths.exerciseIcons.checkmark}  fill="#000" />
           </View>
         )}
         
@@ -177,7 +197,7 @@ const WorkoutScreen = () => {
     >
       <View style={styles.exerciseItemWrapper}>
         <View style={styles.editButtonCircle}>
-          <SvgIcon  path={svgPaths.exerciseIcons.edit} fill="#666" height={30} width={30} />
+          <SvgIcon path={svgPaths.exerciseIcons.edit} fill="#666" height={30} width={30} />
         </View>
       </View>
     </TouchableOpacity>
@@ -185,16 +205,32 @@ const WorkoutScreen = () => {
 
   const renderSecondaryButton = (type: 'instructions' | 'warmup' | 'faq' | 'replace') => (
     <TouchableOpacity style={styles.secondaryButton}>
-  <View>
-    {svgPaths.buttonIcons[type]?.()} {/* Call the function */}
-  </View>
-  <Text style={styles.secondaryButtonText}>
-    {type.charAt(0).toUpperCase() + type.slice(1)}
-  </Text>
-</TouchableOpacity>
-
+      <View>
+        {svgPaths.buttonIcons[type]?.()}
+      </View>
+      <Text style={styles.secondaryButtonText}>
+        {type.charAt(0).toUpperCase() + type.slice(1)}
+      </Text>
+    </TouchableOpacity>
   );
- 
+
+  const renderCompleteButton = () => {
+    if (!selectedExercise || editMode) return null;
+    
+    return (
+      <TouchableOpacity 
+        style={[
+          styles.completeButton, 
+          selectedExercise.completed && styles.completedButton
+        ]}
+        onPress={() => handleCompleteExercise(selectedExercise)}
+      >
+        <Text style={styles.completeButtonText}>
+          {selectedExercise.completed ? 'Completed' : 'Mark Complete'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -204,7 +240,12 @@ const WorkoutScreen = () => {
           {editMode ? (
             <DraggableFlatList
               data={exercises}
-              renderItem={({ item, drag, isActive }) => renderExerciseCircle({ item, drag, isActive, index: exercises.indexOf(item) })}
+              renderItem={({ item, drag, isActive }) => renderExerciseCircle({ 
+                item, 
+                drag, 
+                isActive,
+                index: exercises.findIndex(ex => ex.name === item.name)
+              })}
               keyExtractor={(item) => item.name}
               onDragEnd={handleDragEnd}
               horizontal
@@ -224,8 +265,8 @@ const WorkoutScreen = () => {
                   {renderExerciseCircle({ 
                     item: exercise, 
                     index,
-                    drag: () => {}, // Add empty drag function
-                    isActive: false // Add isActive flag
+                    drag: () => {},
+                    isActive: false
                   })}
                 </View>
               ))}
@@ -243,8 +284,8 @@ const WorkoutScreen = () => {
               <Text style={styles.exerciseTitle}>{selectedExercise.name}</Text>
               <TouchableOpacity style={styles.replaceButton}>
                 <View>
-    {svgPaths.buttonIcons["replace"]?.()} {/* Call the function */}
-  </View>
+                  {svgPaths.buttonIcons["replace"]?.()}
+                </View>
                 <Text style={styles.replaceButtonText}>Replace</Text>
               </TouchableOpacity>
             </View>
@@ -259,7 +300,7 @@ const WorkoutScreen = () => {
               
               <View style={styles.equipmentContainer}>
                 <Image 
-                  source={equipmentIcons[selectedExercise.equipment as keyof typeof equipmentIcons]} 
+                  source={equipmentIcons[selectedExercise.equipment]} 
                   style={styles.equipmentIcon} 
                 />
                 <Text style={styles.equipmentText}>
@@ -273,6 +314,8 @@ const WorkoutScreen = () => {
               {renderSecondaryButton('warmup')}
               {renderSecondaryButton('faq')}
             </View>
+
+            {renderCompleteButton()}
           </View>
         </View>
       )}
@@ -303,7 +346,6 @@ const WorkoutScreen = () => {
   );
 };
 
-// Styles remain the same as before
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -339,7 +381,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFD700',
   },
   completedExerciseWrapper: {
-    borderColor: '#4CAF50',
+    borderColor: '#FFD700',
   },
   exerciseCircleContainer: {
     alignItems: 'center',
@@ -376,14 +418,16 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     position: 'absolute',
-    backgroundColor: '#4CAF50',
-    width: 24,
-    height: 24,
+    backgroundColor: '#ffe74c',
+    width: 20,
+    height: 20,
+    borderColor: '#fff',
+    borderWidth: 2,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    right: 0,
-    top: 0,
+   right: 11,
+    bottom: 0,
     zIndex: 2,
   },
   removeButton: {
@@ -511,6 +555,21 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 14,
     fontWeight: '500',
+  },
+  completeButton: {
+    marginTop: 15,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  completedButton: {
+    backgroundColor: '#cccccc',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   editControls: {
     padding: 16,

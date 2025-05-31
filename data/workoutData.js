@@ -42,10 +42,10 @@ export const workoutData = {
 };
 
 export const equipmentIcons = {
-  barbell: require('@/assets/p25.png'),
-  dumbbell: require('@/assets/p25.png'),
-  cable: require('@/assets/p25.png'),
-  bodyweight: require('@/assets/p25.png'),
+  barbell: require('@/assets/image-2.png'),
+  dumbbell: require('@/assets/image-3.png'),
+  cable: require('@/assets/image-1.png'),
+  bodyweight: require('@/assets/image-5.png'),
 };
 
 export const svgPaths = {
