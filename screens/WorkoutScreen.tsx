@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { Svg, Path } from 'react-native-svg';
 import { workoutData, equipmentIcons, svgPaths } from '@/data/workoutData';
-
+import {Image} from "expo-image";
 const WorkoutScreen = () => {
   // State management
   const [exercises, setExercises] = useState(workoutData.exercises);
@@ -253,6 +253,7 @@ const WorkoutScreen = () => {
               <Image
                 source={{ uri: isGifPlaying ? selectedExercise.gif_asset_url : selectedExercise.asset_url }}
                 style={styles.exerciseGif}
+                autoplay
                 resizeMode="contain"
               />
               
