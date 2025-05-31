@@ -177,7 +177,7 @@ const WorkoutScreen = () => {
     >
       <View style={styles.exerciseItemWrapper}>
         <View style={styles.editButtonCircle}>
-          <SvgIcon path={svgPaths.exerciseIcons.edit} fill="#666" />
+          <SvgIcon  path={svgPaths.exerciseIcons.edit} fill="#666" height={30} width={30} />
         </View>
       </View>
     </TouchableOpacity>
@@ -185,11 +185,14 @@ const WorkoutScreen = () => {
 
   const renderSecondaryButton = (type: 'instructions' | 'warmup' | 'faq' | 'replace') => (
     <TouchableOpacity style={styles.secondaryButton}>
-      <SvgIcon path={svgPaths.buttonIcons[type]} fill="#333" />
-      <Text style={styles.secondaryButtonText}>
-        {type.charAt(0).toUpperCase() + type.slice(1)}
-      </Text>
-    </TouchableOpacity>
+  <View>
+    {svgPaths.buttonIcons[type]?.()} {/* Call the function */}
+  </View>
+  <Text style={styles.secondaryButtonText}>
+    {type.charAt(0).toUpperCase() + type.slice(1)}
+  </Text>
+</TouchableOpacity>
+
   );
  
 
@@ -239,12 +242,9 @@ const WorkoutScreen = () => {
             <View style={styles.titleContainer}>
               <Text style={styles.exerciseTitle}>{selectedExercise.name}</Text>
               <TouchableOpacity style={styles.replaceButton}>
-                <SvgIcon 
-                  path={svgPaths.buttonIcons.replace} 
-                  fill="#010101" 
-                  width={16} 
-                  height={16} 
-                />
+                <View>
+    {svgPaths.buttonIcons["replace"]?.()} {/* Call the function */}
+  </View>
                 <Text style={styles.replaceButtonText}>Replace</Text>
               </TouchableOpacity>
             </View>
