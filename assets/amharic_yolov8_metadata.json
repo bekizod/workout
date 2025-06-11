@@ -1,0 +1,59 @@
+{
+  "name": "AmharicYOLOv8",
+  "version": "1.0",
+  "description": "YOLOv8 model for object detection in Amharic",
+  "author": "Your Name",
+  "license": "Apache License 2.0",
+  "input_type": "image",
+  "output_type": "detections",
+  "input_shape": [
+    1,
+    640,
+    640,
+    3
+  ],
+  "output_shapes": {
+    "output0": [
+      1,
+      84,
+      8400
+    ]
+  },
+  "class_labels": [
+    "class1",
+    "class2",
+    "class3"
+  ],
+  "preprocessing": [
+    "RGB format",
+    "Resize to 640x640",
+    "Normalize pixel values to 0-1"
+  ],
+  "postprocessing": [
+    "Non-max suppression",
+    "Confidence threshold: 0.25",
+    "IOU threshold: 0.45"
+  ],
+  "model_parameters": {
+    "input_normalization": {
+      "mean": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "std": [
+        255.0,
+        255.0,
+        255.0
+      ]
+    },
+    "quantized": "float32"
+  },
+  "usage_instructions": {
+    "react_native": {
+      "preprocessing": "Resize image to 640x640, convert to RGB, normalize to 0-1",
+      "output_processing": "Apply non-max suppression with confidence threshold 0.25 and IOU threshold 0.45",
+      "recommended_library": "react-native-tflite"
+    }
+  }
+}
